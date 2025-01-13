@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser } from "@/app/lib/auth";
 import {
@@ -12,6 +12,10 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  Users,
+  FileCheck,
+  UserCog,
+  Bell,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -56,7 +60,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Animated Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-base-100 to-secondary/20 animate-gradient-slow">
         <div className="absolute inset-0 bg-grid-black/[0.02] bg-[size:20px_20px]" />
       </div>
@@ -66,7 +69,7 @@ export default function Login() {
           {/* Left Section - Portal Info */}
           <div className="text-center lg:text-left lg:w-1/2 space-y-6">
             <div className="flex items-center justify-center lg:justify-start gap-4 mb-8">
-              <div className="p-3 bg-primary/10 rounded-xl backdrop-blur-sm">
+              <div className="p-3 bg-primary/10 rounded-xl backdrop-blur-sm transform hover:scale-105 transition-transform duration-300">
                 <GraduationCap className="text-primary w-12 h-12" />
               </div>
               <div>
@@ -79,12 +82,13 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="hidden lg:block space-y-6">
-              <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm">
+            <div className="hidden lg:block">
+              {/* Main feature card */}
+              <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 mb-6">
                 <div className="card-body p-6">
                   <div className="flex items-start gap-4">
                     <div className="p-3 bg-primary/10 rounded-xl">
-                      <BookOpen className="text-primary w-6 h-6" />
+                      <BookOpen className="text-primary w-6 h-6 animate-pulse" />
                     </div>
                     <div>
                       <h3 className="font-bold text-xl mb-2">
@@ -92,8 +96,81 @@ export default function Login() {
                       </h3>
                       <p className="text-base-content/70">
                         Experience seamless exam creation, management, and
-                        assessment with our comprehensive digital solution.
+                        assessment.
                       </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2x2 Grid Cards */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Admin Card */}
+                <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <div className="card-body p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-secondary/10 rounded-xl">
+                        <UserCog className="text-secondary w-5 h-5 animate-bounce" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg mb-1">
+                          Admin Control
+                        </h3>
+                        <p className="text-base-content/70 text-sm">
+                          Comprehensive system and user management.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* HOD Card */}
+                <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <div className="card-body p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-accent/10 rounded-xl">
+                        <FileCheck className="text-accent w-5 h-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg mb-1">Department</h3>
+                        <p className="text-base-content/70 text-sm">
+                          Efficient exam paper review process.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Teacher Card */}
+                <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <div className="card-body p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-xl">
+                        <Users className="text-primary w-5 h-5 animate-bounce" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg mb-1">Teachers</h3>
+                        <p className="text-base-content/70 text-sm">
+                          Submit papers and manage grades.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Updates Card */}
+                <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <div className="card-body p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-secondary/10 rounded-xl">
+                        <Bell className="text-secondary w-5 h-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg mb-1">Updates</h3>
+                        <p className="text-base-content/70 text-sm">
+                          Real-time exam notifications.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -226,6 +303,11 @@ export default function Login() {
         .animate-gradient-slow {
           background-size: 200% 200%;
           animation: gradient 15s ease infinite;
+        }
+
+        .bg-grid-black {
+          background-image: linear-gradient(#000 1px, transparent 1px),
+            linear-gradient(90deg, #000 1px, transparent 1px);
         }
       `}</style>
     </div>

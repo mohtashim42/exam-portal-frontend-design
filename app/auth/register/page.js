@@ -11,6 +11,9 @@ import {
   UserCircle,
   ArrowLeft,
   AlertCircle,
+  Shield,
+  BookOpen,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -57,39 +60,72 @@ export default function Register() {
       </div>
 
       <div className="container px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row justify-center items-center gap-6 max-w-5xl mx-auto">
-          {/* Left Section - Portal Info */}
-          <div className="text-center lg:text-left lg:w-2/5 space-y-4">
-            <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
-              <div className="p-2 bg-primary/10 rounded-xl backdrop-blur-sm">
-                <GraduationCap className="text-primary w-10 h-10" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Digital Exam Portal
-                </h1>
-                <p className="text-base-content/70 mt-1">
-                  Join Our Academic Community
-                </p>
+        <div className="flex flex-col lg:flex-row justify-center items-start gap-6 max-w-6xl mx-auto">
+          {/* Left Section - Portal Info & Benefits */}
+          <div className="lg:w-2/5 space-y-6">
+            {/* Portal Info */}
+            <div className="text-center lg:text-left space-y-4">
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
+                <div className="p-2 bg-primary/10 rounded-xl backdrop-blur-sm">
+                  <GraduationCap className="text-primary w-10 h-10" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    Digital Exam Portal
+                  </h1>
+                  <p className="text-base-content/70 mt-1">
+                    Join Our Academic Community
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="hidden lg:block">
-              <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm">
-                <div className="card-body p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-xl">
-                      <UserCircle className="text-primary w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg mb-1">
-                        Welcome to Our Platform
-                      </h3>
-                      <p className="text-base-content/70 text-sm">
-                        Create your account to access our comprehensive digital
-                        exam management system.
-                      </p>
-                    </div>
+            {/* Benefits Section */}
+            <div className="card bg-base-100/50 shadow-xl border border-base-200 backdrop-blur-sm">
+              <div className="card-body p-6 space-y-6">
+                {/* Benefit 1 */}
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-primary/10 rounded-xl shrink-0">
+                    <Shield className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-base mb-1">
+                      Secure Platform
+                    </h3>
+                    <p className="text-base-content/60 text-sm leading-relaxed">
+                      Advanced security measures to protect your academic data
+                      and privacy
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefit 2 */}
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-secondary/10 rounded-xl shrink-0">
+                    <BookOpen className="w-6 h-6 text-secondary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-base mb-1">
+                      Smart Management
+                    </h3>
+                    <p className="text-base-content/60 text-sm leading-relaxed">
+                      Efficient tools for exam creation, scheduling, and grading
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefit 3 */}
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-accent/10 rounded-xl shrink-0">
+                    <Clock className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-base mb-1">
+                      Real-time Updates
+                    </h3>
+                    <p className="text-base-content/60 text-sm leading-relaxed">
+                      Stay informed with instant notifications and announcements
+                    </p>
                   </div>
                 </div>
               </div>
