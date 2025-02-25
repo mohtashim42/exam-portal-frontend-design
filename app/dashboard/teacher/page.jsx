@@ -39,21 +39,21 @@ export default function TeacherDashboard() {
       title: "Submit Exam Paper",
       icon: <FileText className="w-10 h-10" />,
       description: "Create and submit new examination papers",
-      link: "/submit-paper",
+      link: "/dashboard/teacher/submit-paper",
       color: "primary",
     },
     {
       title: "View Submitted Papers",
       icon: <Eye className="w-10 h-10" />,
       description: "Review your submitted examination papers",
-      link: "/view-papers",
+      link: "/dashboard/teacher/review-paper",
       color: "secondary",
     },
     {
       title: "View Assigned Duties",
       icon: <Clipboard className="w-10 h-10" />,
       description: "Check your examination duty schedule",
-      link: "/assigned-duties",
+      link: "/components/DutyScheduleForm",
       color: "accent",
     },
   ];
@@ -99,7 +99,7 @@ export default function TeacherDashboard() {
             {
               icon: <FileText size={20} />,
               label: "Submit Paper",
-              link: "/submit-paper",
+              link: "/components/PaperSubmissionForm",
             },
             {
               icon: <Eye size={20} />,

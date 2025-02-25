@@ -40,7 +40,7 @@ export default function Register() {
       });
       const data = await response.json();
       if (response.ok) {
-        router.push("/login");
+        router.push("/auth/login");
       } else {
         setError(data.msg || "Registration failed");
       }

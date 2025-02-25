@@ -29,7 +29,7 @@ export default function Navigation({ userRole }) {
               <Link href="/dashboard/hod">Dashboard</Link>
             </li>
           )}
-          {userRole === "exam-controller" && (
+          {userRole === "admin" && (
             <li>
               <Link href="/dashboard/exam-controller">Dashboard</Link>
             </li>

@@ -44,8 +44,11 @@ export default function Login() {
         case "hod":
           router.push("/dashboard/hod");
           break;
-        case "exam-controller":
+        case "admin":
           router.push("/dashboard/exam-controller");
+          break;
+        case "exam-controller":
+          router.push("/dashboard/student");
           break;
         default:
           router.push("/");
