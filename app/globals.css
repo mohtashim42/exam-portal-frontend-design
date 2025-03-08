@@ -113,3 +113,51 @@
   background-image: linear-gradient(#000 1px, transparent 1px),
     linear-gradient(90deg, #000 1px, transparent 1px);
 }
+
+@layer utilities {
+  .responsive-container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6;
+  }
+  
+  .responsive-card {
+    @apply p-4 sm:p-6 rounded-lg;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base;
+  }
+  
+  .responsive-heading {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold;
+  }
+}
+
+/* Sidebar Responsiveness */
+@media (max-width: 1024px) {
+  .sidebar-open {
+    transform: translateX(0);
+  }
+  
+  .sidebar-closed {
+    transform: translateX(-100%);
+  }
+}
+
+/* Mobile-first padding */
+.section-padding {
+  @apply p-4 sm:p-6 lg:p-8;
+}
+
+/* Responsive table */
+.responsive-table {
+  @apply w-full overflow-x-auto;
+}
+
+/* Responsive form */
+.responsive-form {
+  @apply max-w-lg mx-auto w-full space-y-4 p-4 sm:p-6;
+}

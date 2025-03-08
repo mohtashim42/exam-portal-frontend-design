@@ -9,12 +9,13 @@ import {
   Check,
   AlertCircle,
 } from "lucide-react";
-// import { submitPaper } from "../lib/api";
+import { submitPaper } from "@/app/lib/api";
 
 export default function PaperSubmissionForm() {
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [department, setDepartment] = useState("");
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,34 +48,38 @@ export default function PaperSubmissionForm() {
     setIsSubmitting(true);
 
     try {
-      // Here you would handle the file upload
-      // const formData = new FormData();
-      // formData.append("title", title);
-      // formData.append("subject", subject);
-      // formData.append("content", content);
-      // if (file) formData.append("file", file);
+      if (!file) {
+        throw new Error("Please select a PDF file");
+      }
 
-      // await submitPaper(formData);
+      const formData = new FormData();
+      formData.append("pdfFile", file); // Changed to match server's expected field name
+      formData.append("title", title);
+      formData.append("subject", subject);
+      formData.append("abstract", content);
+      formData.append("department", department);
 
-      // Simulating API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await submitPaper(formData);
 
-      setSubmitSuccess(true);
-      setTimeout(() => {
-        setTitle("");
-        setSubject("");
-        setContent("");
-        setFile(null);
-        setSubmitSuccess(false);
-      }, 3000);
+      if (result) {
+        setSubmitSuccess(true);
+        // Reset form after successful submission
+        setTimeout(() => {
+          setTitle("");
+          setSubject("");
+          setContent("");
+          setDepartment("");
+          setFile(null);
+          setSubmitSuccess(false);
+        }, 3000);
+      }
     } catch (error) {
       console.error("Error submitting paper:", error);
-      alert("Failed to submit paper. Please try again.");
+      alert(error.message || "Failed to submit paper. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl w-full bg-gray-800 rounded-xl overflow-hidden shadow-2xl border border-gray-700">
@@ -151,6 +156,23 @@ export default function PaperSubmissionForm() {
                   onChange={(e) => setContent(e.target.value)}
                   required
                 ></textarea>
+              </div>
+
+              {/* Add Department input after subject */}
+              <div className="form-control">
+                <label className="block mb-2">
+                  <span className="text-purple-300 font-medium flex items-center gap-2">
+                    <Book size={18} className="text-purple-400" /> Department
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter department name"
+                  className="w-full bg-gray-700 border-2 border-gray-600 focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50 rounded-lg p-3 text-white transition-all duration-200"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  required
+                />
               </div>
 
               {/* File Upload Section */}

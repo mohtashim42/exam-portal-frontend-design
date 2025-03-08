@@ -53,7 +53,7 @@ export default function TeacherDashboard() {
       title: "View Assigned Duties",
       icon: <Clipboard className="w-10 h-10" />,
       description: "Check your examination duty schedule",
-      link: "/components/DutyScheduleForm",
+      link: "/dashboard/teacher/duty-schedules",
       color: "accent",
     },
   ];
@@ -99,17 +99,17 @@ export default function TeacherDashboard() {
             {
               icon: <FileText size={20} />,
               label: "Submit Paper",
-              link: "/components/PaperSubmissionForm",
+              link: "/dashboard/teacher/submit-paper",
             },
             {
               icon: <Eye size={20} />,
               label: "View Papers",
-              link: "/view-papers",
+              link: "/dashboard/teacher/review-paper",
             },
             {
               icon: <CalendarCheck size={20} />,
               label: "Assigned Duties",
-              link: "/duties",
+              link: "/dashboard/teacher/duty-schedules",
             },
             {
               icon: <Bell size={20} />,
