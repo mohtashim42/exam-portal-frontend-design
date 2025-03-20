@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+// import { getTeacherExamPapers } from "@/app/lib/api";
 import {
   FileText,
   Book,
   MessageSquare,
-  Upload,
   Eye,
   AlertCircle,
   Search,
@@ -16,136 +16,206 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Upload,
 } from "lucide-react";
 
+// First, import the downloadPaper function and toast
+import { getTeacherExamPapers, downloadPaper } from "@/app/lib/api";
+import { toast } from "react-hot-toast";
+
 export default function SubmittedPapersScreen() {
+  // Add filter options
+  const statusOptions = ["All", "Pending", "Approved", "Rejected"];
+  const departmentOptions = [
+    "All",
+    "Computer Science",
+    "Mathematics",
+    "Physics",
+    "Chemistry",
+    "Biology",
+    "English",
+    "History",
+    "Geography",
+    "Economics",
+  ];
+  const sortOptions = [
+    { value: "newest", label: "Newest First" },
+    { value: "oldest", label: "Oldest First" },
+    { value: "alphabetical", label: "Alphabetical" },
+  ];
+
+  // Existing state declarations
+  const [stats, setStats] = useState({
+    total: 0,
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+  });
+
   const [papers, setPapers] = useState([]);
   const [filteredPapers, setFilteredPapers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [subjectFilter, setSubjectFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
   const [expandedPaperId, setExpandedPaperId] = useState(null);
   const [sortBy, setSortBy] = useState("newest");
 
-  // Simulate an API GET call to fetch submitted papers
   useEffect(() => {
-    const fetchSubmittedPapers = async () => {
-      // Simulated delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Sample data: Replace with your actual API response
-      const samplePapers = [
-        {
-          id: 1,
-          title: "A Study on Quantum Computing",
-          subject: "Computer Science",
-          abstract:
-            "This paper explores the fundamentals of quantum computing and its potential applications. We analyze the current state of quantum computing research and discuss potential breakthroughs in the near future. The study covers quantum bits, quantum gates, and quantum algorithms that could revolutionize computing as we know it.",
-          fileName: "quantum_computing.pdf",
-          fileSize: "2.45 MB",
-          status: "Approved",
-          submittedDate: "2024-02-10",
-          feedback: "Excellent work! Minor revisions needed in the conclusion.",
-        },
-        {
-          id: 2,
-          title: "Advancements in AI",
-          subject: "Information Technology",
-          abstract:
-            "An in-depth look at the latest advancements in artificial intelligence and machine learning. This paper reviews recent developments in neural networks, deep learning, and natural language processing. We also explore ethical considerations in AI development and implementation.",
-          fileName: "ai_advancements.pdf",
-          fileSize: "3.12 MB",
-          status: "Pending",
-          submittedDate: "2024-02-18",
-          feedback: "",
-        },
-        {
-          id: 3,
-          title: "Renewable Energy Solutions",
-          subject: "Environmental Science",
-          abstract:
-            "A comprehensive overview of renewable energy solutions and their impact on sustainability. This research examines solar, wind, hydro, and geothermal energy sources, comparing their efficiency, cost, and environmental impact. We propose a framework for transitioning to renewable energy on a global scale.",
-          fileName: "renewable_energy.pdf",
-          fileSize: "1.78 MB",
-          status: "Rejected",
-          submittedDate: "2024-01-25",
-          feedback: "The paper lacks sufficient data analysis and references.",
-        },
-        {
-          id: 4,
-          title: "Blockchain Applications in Healthcare",
-          subject: "Information Technology",
-          abstract:
-            "This paper examines the potential applications of blockchain technology in healthcare systems. We analyze how blockchain can improve medical record management, supply chain integrity for pharmaceuticals, and patient data security.",
-          fileName: "blockchain_healthcare.pdf",
-          fileSize: "2.89 MB",
-          status: "Approved",
-          submittedDate: "2024-02-05",
-          feedback:
-            "Well-researched and innovative. Approved with minor edits.",
-        },
-        {
-          id: 5,
-          title: "Climate Change Impact on Marine Ecosystems",
-          subject: "Environmental Science",
-          abstract:
-            "A detailed study on the effects of climate change on marine ecosystems. This research documents changes in ocean temperature, acidity, and sea levels, and their impact on coral reefs, marine biodiversity, and coastal communities.",
-          fileName: "climate_marine.pdf",
-          fileSize: "4.12 MB",
-          status: "Pending",
-          submittedDate: "2024-02-22",
-          feedback: "",
-        },
-      ];
-      setPapers(samplePapers);
-      setFilteredPapers(samplePapers);
-      setIsLoading(false);
-    };
-
-    fetchSubmittedPapers();
+    fetchExamPapers();
   }, []);
 
-  // Get unique subjects for filter
-  const subjects = ["All", ...new Set(papers.map((paper) => paper.subject))];
+  // Add handleDownload function inside the component
+  const handleDownload = async (paperId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
-  // Filter papers based on search term and status filter
+    try {
+      setIsLoading(true);
+      await downloadPaper(paperId);
+      toast.success("Paper downloaded successfully");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download paper");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchExamPapers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getTeacherExamPapers();
+
+      if (response.success) {
+        setStats(response.stats);
+        setPapers(response.papers);
+        setFilteredPapers(response.papers);
+      } else {
+        throw new Error("Failed to fetch papers");
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error("Failed to fetch exam papers:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update filter logic based on API response structure
   useEffect(() => {
-    let results = papers;
+    if (!Array.isArray(papers)) return;
 
-    // Filter by search term
-    if (searchTerm) {
-      results = results.filter(
-        (paper) =>
-          paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          paper.abstract.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    let filtered = [...papers];
+
+    try {
+      if (searchTerm) {
+        filtered = filtered.filter(
+          (paper) =>
+            paper?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            paper?.department?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      if (statusFilter !== "all") {
+        filtered = filtered.filter(
+          (paper) => paper?.status?.toLowerCase() === statusFilter
+        );
+      }
+
+      if (departmentFilter !== "all") {
+        filtered = filtered.filter(
+          (paper) => paper?.department?.toLowerCase() === departmentFilter
+        );
+      }
+
+      filtered.sort((a, b) => {
+        if (sortBy === "newest") {
+          return (
+            new Date(b?.submittedDate || 0) - new Date(a?.submittedDate || 0)
+          );
+        }
+        return (
+          new Date(a?.submittedDate || 0) - new Date(b?.submittedDate || 0)
+        );
+      });
+
+      setFilteredPapers(filtered);
+    } catch (err) {
+      console.error("Error filtering papers:", err);
+      setFilteredPapers([]);
     }
+  }, [papers, searchTerm, statusFilter, departmentFilter, sortBy]);
 
-    // Filter by status
-    if (statusFilter !== "All") {
-      results = results.filter((paper) => paper.status === statusFilter);
-    }
+  // Update the papers list rendering
+  const renderPaperCard = (paper) => (
+    <div
+      key={paper.id}
+      className="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700"
+    >
+      <div className="p-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-bold text-white">{paper.title}</h3>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              paper.status === "pending"
+                ? "bg-yellow-900/50 text-yellow-300"
+                : paper.status === "approved"
+                ? "bg-green-900/50 text-green-300"
+                : "bg-red-900/50 text-red-300"
+            }`}
+          >
+            {paper.status}
+          </span>
+        </div>
 
-    // Filter by subject
-    if (subjectFilter !== "All") {
-      results = results.filter((paper) => paper.subject === subjectFilter);
-    }
+        <div className="mt-2 text-gray-400 text-sm">
+          <p>Department: {paper.department}</p>
+          <p>Submitted: {new Date(paper.submittedDate).toLocaleDateString()}</p>
+        </div>
 
-    // Sort papers
-    if (sortBy === "newest") {
-      results = [...results].sort(
-        (a, b) => new Date(b.submittedDate) - new Date(a.submittedDate)
-      );
-    } else if (sortBy === "oldest") {
-      results = [...results].sort(
-        (a, b) => new Date(a.submittedDate) - new Date(b.submittedDate)
-      );
-    } else if (sortBy === "alphabetical") {
-      results = [...results].sort((a, b) => a.title.localeCompare(b.title));
-    }
+        {paper.pdfFile && (
+          <div className="mt-3 flex items-center gap-2">
+            <FileText size={16} className="text-purple-400" />
+            <span className="text-sm text-gray-300">
+              {paper.pdfFile.filename}
+            </span>
+            <span className="text-xs text-gray-500">
+              ({paper.pdfFile.size} bytes)
+            </span>
+          </div>
+        )}
 
-    setFilteredPapers(results);
-  }, [searchTerm, statusFilter, subjectFilter, sortBy, papers]);
+        {paper.feedback && (
+          <div className="mt-3 p-3 bg-gray-700/30 rounded-lg">
+            <p className="text-sm text-gray-300">{paper.feedback}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="loading loading-spinner loading-lg text-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="alert alert-error">
+          <AlertCircle className="w-6 h-6" />
+          <span>{error}</span>
+        </div>
+      </div>
+    );
+  }
 
   const toggleExpand = (id) => {
     setExpandedPaperId(expandedPaperId === id ? null : id);
@@ -242,10 +312,11 @@ export default function SubmittedPapersScreen() {
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <option value="All">All Status</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Rejected">Rejected</option>
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -255,12 +326,12 @@ export default function SubmittedPapersScreen() {
                   <Book size={16} className="text-purple-400" />
                   <select
                     className="bg-transparent text-white focus:outline-none"
-                    value={subjectFilter}
-                    onChange={(e) => setSubjectFilter(e.target.value)}
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
                   >
-                    {subjects.map((subject) => (
-                      <option key={subject} value={subject}>
-                        {subject}
+                    {departmentOptions.map((dept) => (
+                      <option key={dept} value={dept}>
+                        {dept}
                       </option>
                     ))}
                   </select>
@@ -275,9 +346,11 @@ export default function SubmittedPapersScreen() {
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                   >
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="alphabetical">Alphabetical</option>
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -377,23 +450,38 @@ export default function SubmittedPapersScreen() {
                       <div className="space-y-6">
                         <div>
                           <h4 className="text-md font-semibold text-purple-300 flex items-center gap-2 mb-2">
-                            <Upload size={16} className="text-purple-400" />{" "}
-                            Submitted File
+                            <Upload size={16} className="text-purple-400" /> Submitted File
                           </h4>
                           <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg">
                             <FileText size={18} className="text-purple-400" />
-                            <span className="text-white text-sm">
-                              {paper.fileName}
-                            </span>
-                            <span className="text-gray-400 text-xs">
-                              ({paper.fileSize})
-                            </span>
-                            <button className="ml-auto p-2 bg-purple-600/20 rounded-full hover:bg-purple-600/40 transition-colors">
-                              <Download size={16} className="text-purple-400" />
+                            <div className="flex-1">
+                              <span className="text-white text-sm">
+                                {paper.pdfFile?.filename || paper.fileName || "Document.pdf"}
+                              </span>
+                              <span className="text-gray-400 text-xs ml-2">
+                                {paper.pdfFile?.size
+                                  ? `(${(paper.pdfFile.size / 1024 / 1024).toFixed(2)} MB)`
+                                  : paper.fileSize
+                                  ? `(${paper.fileSize})`
+                                  : ""}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => handleDownload(paper.id, e)}
+                              className="ml-auto p-2 bg-purple-600/20 rounded-full hover:bg-purple-600/40 transition-colors"
+                              disabled={isLoading}
+                            >
+                              {isLoading ? (
+                                <div className="animate-spin">
+                                  <Clock size={16} className="text-purple-400" />
+                                </div>
+                              ) : (
+                                <Download size={16} className="text-purple-400" />
+                              )}
                             </button>
                           </div>
                         </div>
-
+                        
                         <div>
                           <h4 className="text-md font-semibold text-purple-300 flex items-center gap-2 mb-2">
                             <AlertCircle

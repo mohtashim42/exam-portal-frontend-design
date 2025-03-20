@@ -15,105 +15,160 @@ import {
   ChevronUp,
   Clock,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import {
+  getHodPapers,
+  approveHodPaper,
+  rejectHodPaper,
+  downloadPaper,
+} from "@/app/lib/api";
 
-export default function ReviewPapers() {
-  const [papers, setPapers] = useState([
-    {
-      id: 1,
-      title: "Advanced Database Systems",
-      subject: "Computer Science",
-      department: "Information Technology",
-      submittedBy: "Dr. Sarah Johnson",
-      submittedDate: "2024-03-15",
-      abstract:
-        "This paper covers advanced concepts in database management systems, including distributed databases, query optimization, and transaction management.",
-      status: "pending",
-      fileName: "advanced_db_exam.pdf",
-      fileSize: "2.8 MB",
-    },
-    {
-      id: 2,
-      title: "Digital Signal Processing",
-      subject: "Electronics",
-      department: "Electrical Engineering",
-      submittedBy: "Prof. Michael Chen",
-      submittedDate: "2024-03-14",
-      abstract:
-        "Comprehensive examination of digital signal processing techniques, including Fourier analysis and filter design.",
-      status: "pending",
-      fileName: "dsp_final.pdf",
-    },
-    {
-      id: 3,
-      title: "Machine Learning Fundamentals",
-      subject: "Artificial Intelligence",
-      department: "Computer Science",
-      submittedBy: "Dr. Emily Williams",
-      submittedDate: "2024-03-13",
-      abstract:
-        "Assessment covering core machine learning concepts, algorithms, and practical applications.",
-      status: "pending",
-      fileName: "ml_exam.pdf",
-    },
-  ]);
+const ReviewPapers = () => {
+  const [papers, setPapers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDepartment, setFilterDepartment] = useState("all");
   const [expandedPaper, setExpandedPaper] = useState(null);
-  const [sortBy, setSortBy] = useState("newest");
   const [feedback, setFeedback] = useState("");
-  // Get unique departments for filter
-  const departments = [
-    "all",
-    ...new Set(papers.map((paper) => paper.department)),
-  ];
-  const handleApprove = async (paperId) => {
-    if (!feedback.trim()) {
-      alert("Please provide feedback before approving");
+
+  useEffect(() => {
+    fetchPapers();
+  }, []);
+
+  // Update the fetchPapers function
+  const fetchPapers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getHodPapers();
+      console.log("API Response:", response); // Debug log
+
+      if (response && Array.isArray(response.papers)) {
+        setPapers(response.papers);
+      } else {
+        console.error("Invalid response format:", response);
+        setPapers([]);
+      }
+    } catch (error) {
+      console.error("Error fetching papers:", error);
+      toast.error(error.message || "Failed to fetch papers");
+      setPapers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReview = async (paperId, status) => {
+    if (!paperId) {
+      toast.error("Invalid paper ID");
       return;
     }
-    // Implementation for paper approval
-    console.log("Approving paper:", paperId, "with feedback:", feedback);
-  };
-  const handleReject = async (paperId) => {
+
     if (!feedback.trim()) {
-      alert("Please provide feedback before rejecting");
+      toast.error(`Please provide feedback before ${status}`);
       return;
     }
-    // Implementation for paper rejection
-    console.log("Rejecting paper:", paperId, "with feedback:", feedback);
+
+    try {
+      setIsLoading(true);
+      let result;
+
+      if (status.toLowerCase() === "approved") {
+        result = await approveHodPaper(paperId, feedback);
+      } else if (status.toLowerCase() === "rejected") {
+        result = await rejectHodPaper(paperId, feedback);
+      }
+
+      if (result) {
+        toast.success(`Paper ${status} successfully`);
+        await fetchPapers(); // Refresh the papers list
+        setFeedback("");
+        setExpandedPaper(null);
+      }
+    } catch (error) {
+      console.error("Review error:", error);
+      toast.error(error.message || `Failed to ${status} paper`);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   const filteredPapers = papers
     .filter((paper) => {
       const matchesSearch =
-        paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        paper.submittedBy.toLowerCase().includes(searchTerm.toLowerCase());
+        (paper?.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (paper?.submittedBy?.name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
       const matchesStatus =
-        filterStatus === "all" || paper.status === filterStatus;
+        filterStatus === "all" || paper?.status === filterStatus;
       const matchesDepartment =
-        filterDepartment === "all" || paper.department === filterDepartment;
+        filterDepartment === "all" || paper?.department === filterDepartment;
       return matchesSearch && matchesStatus && matchesDepartment;
     })
-    .sort((a, b) =>
-      sortBy === "newest"
-        ? new Date(b.submittedDate) - new Date(a.submittedDate)
-        : new Date(a.submittedDate) - new Date(b.submittedDate)
+    .sort(
+      (a, b) =>
+        new Date(b?.submittedDate || 0) - new Date(a?.submittedDate || 0)
     );
-  return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="bg-gradient-to-r from-purple-700 to-indigo-700 rounded-xl p-6 mb-6">
-        <h1 className="text-2xl font-bold text-white">
-          Paper Review Dashboard
-        </h1>
-        <p className="text-purple-100">Review and approve examination papers</p>
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loading loading-spinner loading-lg text-primary"></div>
       </div>
-      {/* Filters Section */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative col-span-2">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+    );
+  }
+  // Add handleDownload function at the top of the component
+  const handleDownload = async (paperId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    try {
+      setIsLoading(true);
+      await downloadPaper(paperId);
+      toast.success("Paper downloaded successfully");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download paper");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 shadow-lg">
+        <h1 className="text-3xl font-bold text-white mb-4">Paper Reviews</h1>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-white/60">Total Papers</p>
+            <p className="text-2xl font-bold text-white">{papers.length}</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-white/60">Pending Review</p>
+            <p className="text-2xl font-bold text-white">
+              {papers.filter((p) => p.status === "pending").length}
+            </p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-white/60">Approved Papers</p>
+            <p className="text-2xl font-bold text-white">
+              {papers.filter((p) => p.status === "approved").length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search papers by title or author..."
+            placeholder="Search papers..."
             className="input input-bordered w-full pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -125,7 +180,7 @@ export default function ReviewPapers() {
           onChange={(e) => setFilterStatus(e.target.value)}
         >
           <option value="all">All Status</option>
-          <option value="pending">Pending Review</option>
+          <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
@@ -134,104 +189,195 @@ export default function ReviewPapers() {
           value={filterDepartment}
           onChange={(e) => setFilterDepartment(e.target.value)}
         >
-          {departments.map((dept) => (
-            <option key={dept} value={dept}>
-              {dept.charAt(0).toUpperCase() + dept.slice(1)}
-            </option>
-          ))}
+          <option value="all">All Departments</option>
+          {[...new Set(papers.map((p) => p?.department).filter(Boolean))].map(
+            (dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            )
+          )}
         </select>
       </div>
+
       {/* Papers List */}
       <div className="space-y-4">
-        {filteredPapers.map((paper) => (
-          <div
-            key={paper.id}
-            className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300"
-          >
-            <div className="card-body">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h2 className="card-title text-primary flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    {paper.title}
-                  </h2>
-                  <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-base-content/70">
-                    <div className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      {paper.submittedBy}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {paper.submittedDate}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {paper.fileSize}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <div className="badge badge-primary">{paper.subject}</div>
-                  <div className="badge badge-secondary">
-                    {paper.department}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <button
-                  className="flex items-center gap-2 text-primary hover:underline"
-                  onClick={() =>
-                    setExpandedPaper(
-                      expandedPaper === paper.id ? null : paper.id
-                    )
-                  }
-                >
-                  {expandedPaper === paper.id ? <ChevronUp /> : <ChevronDown />}
-                  {expandedPaper === paper.id ? "Show Less" : "Show More"}
-                </button>
-                {expandedPaper === paper.id && (
-                  <div className="mt-4 space-y-4">
-                    <div className="bg-base-200 p-4 rounded-lg">
-                      <h3 className="font-semibold mb-2">Abstract</h3>
-                      <p className="text-base-content/70">{paper.abstract}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <button className="btn btn-outline btn-primary gap-2">
-                        <Download size={16} />
-                        Download Paper
-                      </button>
-                    </div>
-                    <div className="space-y-4">
-                      <textarea
-                        placeholder="Enter your feedback here..."
-                        className="textarea textarea-bordered w-full h-32"
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                      />
-                      <div className="flex justify-end gap-4">
-                        <button
-                          onClick={() => handleApprove(paper.id)}
-                          className="btn btn-success gap-2"
-                        >
-                          <CheckCircle size={16} />
-                          Approve Paper
-                        </button>
-                        <button
-                          onClick={() => handleReject(paper.id)}
-                          className="btn btn-error gap-2"
-                        >
-                          <XCircle size={16} />
-                          Reject Paper
-                        </button>
+        {filteredPapers.length === 0 ? (
+          <div className="text-center py-12 bg-base-200 rounded-lg">
+            <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold">No papers found</h3>
+            <p className="text-gray-500">Try adjusting your filters</p>
+          </div>
+        ) : (
+          filteredPapers.map((paper) => (
+            <div
+              key={paper._id}
+              className="bg-base-100 rounded-lg shadow-lg hover:shadow-xl transition-all"
+            >
+              <div className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <FileText className="text-primary" />
+                      {paper.title}
+                    </h2>
+                    <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <User className="text-primary" />
+                        <span>{paper.submittedBy?.name || "Unknown"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="text-primary" />
+                        <span>
+                          {paper.submittedDate
+                            ? new Date(paper.submittedDate).toLocaleDateString()
+                            : "No date"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="text-primary" />
+                        <span>{paper.subject || "No subject"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="text-primary" />
+                        <span>{paper.department || "No department"}</span>
                       </div>
                     </div>
                   </div>
+                  <span
+                    className={`badge ${
+                      paper.status === "pending"
+                        ? "badge-warning"
+                        : paper.status === "approved"
+                        ? "badge-success"
+                        : "badge-error"
+                    } badge-lg`}
+                  >
+                    {paper.status
+                      ? paper.status.charAt(0).toUpperCase() +
+                        paper.status.slice(1)
+                      : "Unknown"}
+                  </span>
+                </div>
+
+                {expandedPaper === paper._id && (
+                  <div className="mt-6 space-y-4">
+                    <div className="bg-base-200 rounded-lg p-4">
+                      <h3 className="font-semibold mb-2">Abstract</h3>
+                      <p className="text-sm">
+                        {paper.abstract || "No abstract available"}
+                      </p>
+                    </div>
+
+                    {paper.pdfFile && (
+                      <div className="flex items-center justify-between bg-base-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <FileText className="text-primary" />
+                          <div>
+                            <p className="font-medium">
+                              {paper.pdfFile.filename || "Paper Document"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {paper.pdfFile.size
+                                ? `${(paper.pdfFile.size / 1024 / 1024).toFixed(
+                                    2
+                                  )} MB`
+                                : "Size unknown"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={(e) => handleDownload(paper.id, e)}
+                          className="ml-auto p-4 bg-purple-600/20 rounded-full hover:bg-purple-600/40 transition-colors"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <div className="animate-spin">
+                              <Clock size={16} className="text-purple-400" />
+                            </div>
+                          ) : (
+                            <Download size={16} className="text-purple-400" />
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {paper.status === "pending" && (
+                      <div className="bg-base-200 rounded-lg p-4">
+                        <h3 className="font-semibold mb-3">Review Paper</h3>
+                        <textarea
+                          className="textarea textarea-bordered w-full mb-3"
+                          placeholder="Enter your feedback..."
+                          value={feedback}
+                          onChange={(e) => setFeedback(e.target.value)}
+                          rows={4}
+                        />
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleReview(paper._id, "approved")}
+                            className="btn btn-success flex-1 gap-2"
+                          >
+                            <CheckCircle size={16} />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReview(paper._id, "rejected")}
+                            className="btn btn-error flex-1 gap-2"
+                          >
+                            <XCircle size={16} />
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {paper.feedback && (
+                      <div className="bg-base-200 rounded-lg p-4">
+                        <h3 className="font-semibold mb-2">
+                          Previous Feedback
+                        </h3>
+                        <p className="text-sm">{paper.feedback}</p>
+                        {paper.reviewedAt && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            Reviewed on:{" "}
+                            {new Date(paper.reviewedAt).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
+
+                <div className="mt-4 flex justify-end">
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() =>
+                      setExpandedPaper(
+                        expandedPaper === paper._id ? null : paper._id
+                      )
+                    }
+                  >
+                    {expandedPaper === paper._id ? (
+                      <>
+                        <ChevronUp size={16} />
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={16} />
+                        Show More
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default ReviewPapers;

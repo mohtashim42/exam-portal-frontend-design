@@ -164,3 +164,126 @@ export async function updateBundleStatus(bundleId, status) {
     body: JSON.stringify({ status }),
   });
 }
+
+export async function getTeacherExamPapers() {
+  try {
+    const response = await fetch(`${API_URL}/exams/papers`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch exam papers");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching exam papers:", error);
+    throw error;
+  }
+}
+
+// Fix the getHodPapers function
+export async function getHodPapers() {
+  try {
+    const response = await fetch(`${API_URL}/exams/hod/papers`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch papers");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching HOD papers:", error);
+    throw error;
+  }
+}
+
+// Review paper (approve/reject)
+// Fix the reviewPaper function
+export async function reviewPaper(paperId, status, feedback) {
+  if (!paperId) {
+    throw new Error("Paper ID is required");
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/exams/review/${paperId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({
+        status: status,
+        feedback: feedback,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Failed to ${status} paper`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error reviewing paper:", error);
+    throw error;
+  }
+}
+
+export async function approveHodPaper(paperId, feedback) {
+  return authFetch(`${API_URL}/exams/hod/papers/${paperId}/approve`, {
+    method: "PUT",
+    body: JSON.stringify({ feedback }),
+  });
+}
+
+export async function rejectHodPaper(paperId, feedback) {
+  return authFetch(`${API_URL}/exams/hod/papers/${paperId}/reject`, {
+    method: "PUT",
+    body: JSON.stringify({ feedback }),
+  });
+}
+
+// Add this new function to handle paper downloads
+export async function downloadPaper(paperId) {
+  try {
+    const response = await fetch(
+      `${API_URL}/exams/papers/download/${paperId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to download paper");
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `paper-${paperId}.pdf`; // You can customize the filename
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Download error:", error);
+    throw error;
+  }
+}

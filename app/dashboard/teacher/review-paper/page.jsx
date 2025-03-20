@@ -1,12 +1,11 @@
-import React from "react";
+"use client";
+
 import PaperReviewScreen from "../components/PaperReview";
 
-const page = () => {
+export default function ReviewPaperPage() {
   return (
-    <div>
+    <div className="min-h-screen bg-base-100">
       <PaperReviewScreen />
     </div>
   );
-};
-
-export default page;
+}
